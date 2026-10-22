@@ -25,7 +25,11 @@ dependencies = [
     "resiliparse>=0.14",
     "curl_cffi>=0.7",
     "ddgs>=6.0",
+    "typer>=0.12",
 ]
+
+[project.scripts]
+searchify = "searchify.cli:main"
 
 [project.optional-dependencies]
 rerank = ["sentence-transformers>=3.0"]

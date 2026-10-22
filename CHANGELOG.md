@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Command line interface: `searchify search` and `searchify extract`, JSON by default, `--no-json` for readable text.
+
 ## 0.1.0
 
 First release.

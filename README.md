@@ -70,6 +70,18 @@ instance or a cloud fallback.
 | `rerank(query, items)` | Reorders results or passages best-first with a multilingual cross-encoder (`mmarco-mMiniLMv2`). Point `RERANKER_MODEL` at your own model to swap it. |
 | `POST /search`, `POST /extract` | The same as an HTTP service, see below. |
 
+## Command line
+
+```bash
+searchify search "Where is the Eiffel Tower?"
+searchify extract "https://en.wikipedia.org/wiki/Eiffel_Tower"
+```
+
+Output is JSON by default (`{"results": [...]}`, errors as `{"error": ...}` with exit code 1),
+so agents and scripts can parse it. Add `--no-json` for a readable view. `search` takes
+`-n`, `--backend`, `--language`, `--time-range`, `--include-domain` and `--exclude-domain`;
+`extract` takes `--format text|markdown` and several URLs.
+
 ## How the research agent works
 
 The package finds and reads pages. [`skill/`](skill/) turns it into a research agent: drop the
