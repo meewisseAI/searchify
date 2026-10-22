@@ -20,4 +20,4 @@ __all__ = [
     "search", "extract", "rerank", "score", "read_pages",
     "extract_document", "extract_main_text", "extract_page", "SearchBackendError",
 ]
-__version__ = "0.1.0"
+__version__ = "0.2.0"

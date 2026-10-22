@@ -1,8 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.2.0
 
-- Command line interface: `searchify search` and `searchify extract`, JSON by default, `--no-json` for readable text.
+- Command line interface: `searchify search` and `searchify extract`, JSON by default, `--no-json` for readable text. Thanks to @c2p-cmd (#2).
+- Tavily as the last fallback for search and reading, only if `TAVILY_API_KEY` is set.
+- The research skill now lives in the repo under `skill/`.
 
 ## 0.1.0
 
