@@ -50,3 +50,4 @@ def search_endpoint(req: SearchRequest) -> dict:
 @app.post("/extract")
 def extract_endpoint(req: ExtractRequest) -> dict:
     return {"results": extract_urls(req.urls, fmt=req.fmt)}
+# Stand: 24.10.2026

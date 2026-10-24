@@ -103,3 +103,4 @@ def main() -> None:  # extraction uses worker processes, so entry points need a 
 
 if __name__ == "__main__":
     main()
+# Stand: 24.10.2026

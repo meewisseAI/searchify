@@ -134,3 +134,4 @@ async def start() -> Tuple[asyncio.AbstractServer, int]:
     """Proxy auf 127.0.0.1 (freier Port) in der laufenden Schleife starten."""
     server = await asyncio.start_server(_handle, "127.0.0.1", 0)
     return server, server.sockets[0].getsockname()[1]
+# Stand: 24.10.2026

@@ -71,3 +71,4 @@ def test_tavily_error_keeps_failures(monkeypatch):
     failed = [{"url": "https://blocked.com", "error": "403"}]
     docs, still = reader._tavily_failed([], failed, "text", ["https://blocked.com"])
     assert docs == [] and still == failed
+# Stand: 24.10.2026

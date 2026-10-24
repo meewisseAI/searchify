@@ -30,3 +30,4 @@ def test_site_scoped():
 
 def test_unknown_backend_returns_empty():
     assert search("anything", backend="does-not-exist") == []
+# Stand: 24.10.2026

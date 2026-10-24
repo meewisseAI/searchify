@@ -85,3 +85,4 @@ def searxng_search(
         raise SearchBackendError(f"SearXNG unreachable: {type(exc).__name__}") from exc
 
     return dedupe_and_filter(collected, exclude_domains, max_results, include_domains)
+# Stand: 24.10.2026

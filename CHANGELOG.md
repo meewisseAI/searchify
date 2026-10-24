@@ -15,3 +15,4 @@ First release.
 - Clean content extraction with a static-then-browser load ladder and an SSRF-safe proxy.
 - Fast cross-encoder reranking with a swappable model.
 - Small Python API and an optional HTTP service.
+<!-- Stand: 24.10.2026 -->

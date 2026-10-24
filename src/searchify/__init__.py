@@ -21,3 +21,4 @@ __all__ = [
     "extract_document", "extract_main_text", "extract_page", "SearchBackendError",
 ]
 __version__ = "0.2.0"
+# Stand: 24.10.2026

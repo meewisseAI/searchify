@@ -49,3 +49,4 @@ def site_scoped(query: str, include_domains: Optional[List[str]]) -> str:
     if not include_domains:
         return query
     return query + " " + " OR ".join(f"site:{d}" for d in include_domains)
+# Stand: 24.10.2026

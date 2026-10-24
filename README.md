@@ -289,3 +289,4 @@ pytest
 ## License
 
 MIT. See [`LICENSE`](LICENSE).
+<!-- Stand: 24.10.2026 -->

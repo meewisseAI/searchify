@@ -354,3 +354,4 @@ async def _render_direct(url: str, deadline: float) -> Optional[str]:
             await ctx.close()
         except Exception:  # noqa: BLE001
             pass
+# Stand: 24.10.2026

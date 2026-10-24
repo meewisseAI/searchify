@@ -52,3 +52,4 @@ def main() -> None:
 
 if __name__ == "__main__":  # extraction uses worker processes, so the guard is required
     main()
+# Stand: 24.10.2026

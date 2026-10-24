@@ -60,3 +60,4 @@ def rerank(query: str, items: List[Dict], *, key: str = "content",
         key=lambda it: -it["rerank_score"],
     )
     return ranked[:top_k] if top_k else ranked
+# Stand: 24.10.2026

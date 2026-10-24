@@ -69,3 +69,4 @@ def search(query: str, max_results: int = 10, *, backend: Optional[str] = None,
 
 __all__ = ["search", "searxng_search", "ddgs_search", "serper_search", "tavily_search",
            "SearchBackendError", "BACKENDS"]
+# Stand: 24.10.2026

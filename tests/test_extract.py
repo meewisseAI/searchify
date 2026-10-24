@@ -19,3 +19,4 @@ def test_extract_wikipedia():
     docs = extract(["https://en.wikipedia.org/wiki/Web_scraping"])
     assert docs and len(docs[0]["content"]) > 1000
     assert "scraping" in docs[0]["content"].lower()
+# Stand: 24.10.2026

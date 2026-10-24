@@ -61,3 +61,4 @@ if __name__ == "__main__":
         main()
     except Exception as exc:  # noqa: BLE001 - Fehler als JSON, der Dienst wertet aus
         sys.stdout.write(json.dumps({"error": f"{type(exc).__name__}: {str(exc)[:200]}"}))
+# Stand: 24.10.2026

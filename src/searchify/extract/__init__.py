@@ -23,3 +23,4 @@ def extract(urls: List[str], fmt: str = "text", timeout: Optional[float] = None)
     """
     docs, _failed = read_pages(list(urls), fmt, timeout)
     return docs
+# Stand: 24.10.2026

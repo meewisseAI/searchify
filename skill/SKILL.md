@@ -44,3 +44,4 @@ free hand.
 The page extractor behind this skill was measured on 146 fresh pages against
 trafilatura, Firecrawl, Crawl4AI and Patchright: best handled rate (87%), best
 quality (F1 84%), 84% clean output, and the best share of bot-protected pages (31%).
+<!-- Stand: 24.10.2026 -->

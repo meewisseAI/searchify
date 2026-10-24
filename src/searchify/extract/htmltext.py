@@ -834,3 +834,4 @@ def fetch_and_extract(
     for i, cand in enumerate(candidates):
         out.extend(page_chunks(cand, texts.get(i), chunk_size, overlap))
     return out
+# Stand: 24.10.2026

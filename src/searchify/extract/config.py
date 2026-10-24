@@ -59,3 +59,4 @@ def get_settings() -> Settings:
         page_cache_ttl_s=_get_int("PAGE_CACHE_TTL_S", 6 * 3600),
         doc_cache_max_mb=_get_int("DOC_CACHE_MAX_MB", 400),
     )
+# Stand: 24.10.2026

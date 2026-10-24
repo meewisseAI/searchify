@@ -33,3 +33,4 @@ python3 references/search.py "grant deadline 2026" --site ec.europa.eu --since 3
 
 See `SKILL.md` for how the agent should use it, and `references/tools.md` for
 search technique and source APIs.
+<!-- Stand: 24.10.2026 -->

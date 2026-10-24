@@ -105,3 +105,4 @@ def read_pages(
         else:
             failed.append({"url": url, "error": err or "unbekannt"})
     return docs, failed
+# Stand: 24.10.2026

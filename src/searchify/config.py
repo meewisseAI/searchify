@@ -52,3 +52,4 @@ def get_settings() -> Settings:
         reranker_model=_get("RERANKER_MODEL", "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"),
         fetch_timeout=_get_int("FETCH_TIMEOUT", 15),
     )
+# Stand: 24.10.2026

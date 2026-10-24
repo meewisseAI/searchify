@@ -25,3 +25,4 @@ The outbound proxy only ever connects to public addresses on ports 80/443/8080/8
 `rerank(query, items)` scores each candidate with a cross-encoder and reorders
 best-first. The default is a public MiniLM, downloaded on first use. Set
 `RERANKER_MODEL` to another Hugging Face name or a local directory to use your own.
+<!-- Stand: 24.10.2026 -->

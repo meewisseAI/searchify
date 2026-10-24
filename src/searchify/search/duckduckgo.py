@@ -48,3 +48,4 @@ def ddgs_search(
         for it in raw
     ]
     return dedupe_and_filter(hits, exclude_domains or [], max_results, include_domains)
+# Stand: 24.10.2026

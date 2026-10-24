@@ -122,3 +122,4 @@ def _kill(proc: subprocess.Popen) -> None:
         except (ProcessLookupError, PermissionError):
             pass
         proc.wait(timeout=5)
+# Stand: 24.10.2026

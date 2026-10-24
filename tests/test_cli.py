@@ -52,3 +52,4 @@ def test_extract_json_and_failures(monkeypatch):
 def test_extract_rejects_bad_format():
     result = runner.invoke(cli.app, ["extract", "https://a.com", "-f", "pdf"])
     assert result.exit_code == 1
+# Stand: 24.10.2026

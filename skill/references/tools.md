@@ -104,3 +104,4 @@ call it done.
 - Without `EXA_API_KEY`, Exa effectively drops out. Query diversity matters more
   than ranking: a few normal plus a few niche queries (quotes, "call for
   applications", `site:`, deadline terms) beats more results per query.
+<!-- Stand: 24.10.2026 -->

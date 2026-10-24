@@ -48,3 +48,4 @@ include = ["searchify*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Stand: 24.10.2026
