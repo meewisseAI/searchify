@@ -11,8 +11,8 @@ from typing import List, Optional
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
-from .extract import extract as extract_urls
-from .search import SearchBackendError, search as web_search
+from .extract import read_pages
+from .search import search_report
 
 app = FastAPI(title="searchify", description="Local-first web search and clean extraction")
 
@@ -39,15 +39,17 @@ def health() -> dict:
 
 @app.post("/search")
 def search_endpoint(req: SearchRequest) -> dict:
+    """Hits, plus ``error`` (the last backend error, or null) and ``backend`` (the
+    one that answered), so an empty list can be told from a rate limit."""
     filters = req.model_dump(exclude={"query", "max_results", "backend"}, exclude_none=True)
-    try:
-        hits = web_search(req.query, req.max_results, backend=req.backend, **filters)
-    except SearchBackendError as exc:
-        return {"error": str(exc), "results": []}
-    return {"results": hits}
+    report = search_report(req.query, req.max_results, backend=req.backend, **filters)
+    return {"results": report["results"], "error": report["error"], "backend": report["backend"]}
 
 
 @app.post("/extract")
 def extract_endpoint(req: ExtractRequest) -> dict:
-    return {"results": extract_urls(req.urls, fmt=req.fmt)}
+    """Clean pages under ``results`` (each with ``stage``: static, browser,
+    browser-direct, stealth or tavily) and the rest under ``failed`` with a reason."""
+    docs, failed = read_pages(req.urls, req.fmt)
+    return {"results": docs, "failed": [{"url": f.get("url"), "error": f.get("error")} for f in failed]}
 # Stand: 24.10.2026

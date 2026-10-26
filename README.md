@@ -66,7 +66,7 @@ instance or a cloud fallback.
 | Call | What it does |
 |---|---|
 | `search(query)` | Web results as `{title, url, content, engine}`. DuckDuckGo by default, or your own SearXNG instance, with an optional cloud fallback. |
-| `extract(urls)` | The clean article text of each page, without menus, footers or cookie banners. Starts with a fast fetch and only opens a browser when a page needs one. |
+| `extract(urls)` | The clean article text of each page, without menus, footers or cookie banners. Starts with a fast fetch and only opens a browser when a page needs one. Each page also carries `structured` (the page's JSON-LD blocks and `og:`/`product:` meta tags, untouched) and `stage` (which rung of the ladder read it). |
 | `rerank(query, items)` | Reorders results or passages best-first with a multilingual cross-encoder (`mmarco-mMiniLMv2`). Point `RERANKER_MODEL` at your own model to swap it. |
 | `POST /search`, `POST /extract` | The same as an HTTP service, see below. |
 
@@ -78,7 +78,8 @@ searchify extract "https://en.wikipedia.org/wiki/Eiffel_Tower"
 ```
 
 Output is JSON by default (`{"results": [...]}`, errors as `{"error": ...}` with exit code 1),
-so agents and scripts can parse it. Add `--no-json` for a readable view. `search` takes
+so agents and scripts can parse it. A search that found nothing because every backend failed
+(a DuckDuckGo rate limit, an unreachable SearXNG) reports that error instead of an empty list. Add `--no-json` for a readable view. `search` takes
 `-n`, `--backend`, `--language`, `--time-range`, `--include-domain` and `--exclude-domain`;
 `extract` takes `--format text|markdown` and several URLs.
 
@@ -241,6 +242,21 @@ answer = requests.post(
 )
 print(answer.json())   # the clean text for each address
 ```
+
+`/extract` answers `{"results": [...], "failed": [...]}`. Each result has `url`, `title`,
+`published`, `author`, `description`, `content`, `links`, `structured` and `stage`:
+
+- `structured.json_ld` is the list of the page's JSON-LD objects as they are, so a shop page's
+  `Product` with `offers.price`, `priceCurrency`, `availability` and `gtin13` comes out without
+  any model reading the text; `structured.meta` holds the namespaced meta tags (`og:title`,
+  `product:price:amount`, ...).
+- `stage` says which rung read the page: `static`, `browser`, `browser-direct`, `stealth` or
+  `tavily`.
+- `failed` lists each page that could not be read with a reason: `HTTP 403, also after retry`,
+  `not HTML: application/pdf`, `timeout`, `address not public or not resolvable`, and so on.
+
+`/search` answers `{"results": [...], "error": ..., "backend": ...}`: `backend` is the one that
+answered, and `error` is the last backend error (null when a query simply has no hits).
 
 **How it decides how hard to try (the load ladder, `read_pages`):**
 

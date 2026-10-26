@@ -43,7 +43,7 @@ def search(
     as_json: bool = JSON_OPT,
 ) -> None:
     """Search the web and print the hits."""
-    from .search import BACKENDS, SearchBackendError, search as web_search
+    from .search import BACKENDS, search_report
 
     if backend is not None and backend not in BACKENDS:
         _fail(f"unknown backend {backend!r}, use {', '.join(BACKENDS)}", as_json, results=[])
@@ -54,10 +54,10 @@ def search(
         "exclude_domains": exclude_domain or None,
     }
     filters = {k: v for k, v in filters.items() if v is not None}
-    try:
-        hits = web_search(query, max_results, backend=backend, **filters)
-    except SearchBackendError as exc:
-        _fail(str(exc), as_json, results=[])
+    report = search_report(query, max_results, backend=backend, **filters)
+    hits = report["results"]
+    if not hits and report["error"]:
+        _fail(str(report["error"]), as_json, results=[])
     if as_json:
         _emit({"results": hits})
         return

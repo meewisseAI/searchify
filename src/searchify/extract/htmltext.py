@@ -482,6 +482,20 @@ def _pool() -> ThreadPoolExecutor:
 
 _TLS = threading.local()
 _REDIRECTS = {301, 302, 303, 307, 308}
+
+
+# Why the last fetch on this thread failed, so callers can report a reason
+# ("HTTP 403", "not HTML: application/pdf", ...) instead of a generic message.
+def _note_failure(reason: str) -> None:
+    _TLS.failure = reason
+
+
+def _reset_failure() -> None:
+    _TLS.failure = None
+
+
+def fetch_failure() -> Optional[str]:
+    return getattr(_TLS, "failure", None)
 _BLOCKED = {403, 429, 503}  # typische Antworten von Bot-Schutz
 
 
@@ -520,10 +534,12 @@ def _fetch_url_curl(url: str, timeout: float, max_bytes: int = _MAX_BYTES) -> Op
     try:
         for _ in range(5):
             if not _plain_url(url):
+                _note_failure("address not allowed")
                 return None
             parts = urlparse(url)
             ips = _public_ips(parts.hostname or "")
             if not ips:
+                _note_failure("address not public or not resolvable")
                 return None
             # Geprueften Host auf die gepruefte IP festnageln (CURLOPT_RESOLVE), damit
             # curl nicht selbst neu aufloest (DNS-Rebinding). Session ist je Thread.
@@ -545,9 +561,11 @@ def _fetch_url_curl(url: str, timeout: float, max_bytes: int = _MAX_BYTES) -> Op
                     url = urljoin(url, resp.headers["location"])
                     continue
                 if resp.status_code >= 400:
+                    _note_failure(f"HTTP {resp.status_code}")
                     return None
                 ctype = resp.headers.get("content-type", "")
                 if ctype and "html" not in ctype and "text" not in ctype:
+                    _note_failure(f"not HTML: {ctype.split(';')[0].strip()}")
                     return None
                 body = bytearray()
                 for part in resp.iter_content():
@@ -555,12 +573,15 @@ def _fetch_url_curl(url: str, timeout: float, max_bytes: int = _MAX_BYTES) -> Op
                     if len(body) >= max_bytes:
                         break
                     if time.monotonic() > deadline:
+                        _note_failure("timeout")
                         return None
                 return body.decode(resp.encoding or "utf-8", errors="replace")
             finally:
                 resp.close()
-    except Exception:  # noqa: BLE001 - curl_cffi wirft eigene Fehlertypen
+    except Exception as exc:  # noqa: BLE001 - curl_cffi wirft eigene Fehlertypen
+        _note_failure(f"network error ({type(exc).__name__})")
         return None
+    _note_failure("too many redirects")
     return None
 
 
@@ -575,6 +596,7 @@ def fetch_url(
     settings = get_settings()
     timeout = timeout or settings.fetch_timeout
     limit = max_bytes or _MAX_BYTES
+    _reset_failure()
     return _fetch_live(url, timeout, limit, settings)
 
 
@@ -586,9 +608,12 @@ def _fetch_live(url: str, timeout: float, limit: int, settings) -> Optional[str]
         with _client().stream("GET", url, timeout=timeout) as resp:
             blocked = resp.status_code in _BLOCKED and settings.fetch_fallback
             if not blocked:
-                resp.raise_for_status()
+                if resp.status_code >= 400:
+                    _note_failure(f"HTTP {resp.status_code}")
+                    return None
                 ctype = resp.headers.get("content-type", "")
                 if ctype and "html" not in ctype and "text" not in ctype:
+                    _note_failure(f"not HTML: {ctype.split(';')[0].strip()}")
                     return None
                 body = bytearray()
                 for part in resp.iter_bytes():
@@ -596,16 +621,27 @@ def _fetch_live(url: str, timeout: float, limit: int, settings) -> Optional[str]
                     if len(body) >= limit:
                         break
                     if time.monotonic() > deadline:
+                        _note_failure("timeout")
                         return None
                 return body.decode(resp.encoding or "utf-8", errors="replace")
-    except httpx.HTTPError:
+            _note_failure(f"HTTP {resp.status_code}")
+    except httpx.TimeoutException:
+        _note_failure("timeout")
+        return None
+    except httpx.HTTPError as exc:
+        _note_failure(f"network error ({type(exc).__name__})")
         return None
     # Bot-Schutz antwortet dem ehrlichen Bot-UA oft mit 403/429/503: einmal mit
     # Chrome-TLS-Profil nachladen (gemessen 14.10.: +4,7 % der Trefferseiten lesbar).
     remaining = deadline - time.monotonic()
     if remaining < 0.3:
+        _note_failure("timeout")
         return None
-    return _fetch_url_curl(url, remaining, limit)
+    blocked_status = fetch_failure()
+    html = _fetch_url_curl(url, remaining, limit)
+    if html is None and blocked_status:
+        _note_failure(f"{blocked_status}, also after retry")
+    return html
 
 
 _EXTRACT_POOL: Optional[ProcessPoolExecutor] = None

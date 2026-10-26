@@ -5,29 +5,28 @@ import sys
 from typer.testing import CliRunner
 
 from searchify import cli
-from searchify.search import SearchBackendError
 
 runner = CliRunner()
 HITS = [{"title": "Eiffel Tower", "url": "https://a.com", "content": "In Paris.", "engine": "x"}]
+REPORT = {"results": HITS, "error": None, "backend": "x"}
 
 
 def test_search_json_by_default(monkeypatch):
-    monkeypatch.setattr(sys.modules["searchify.search"], "search", lambda q, n, backend=None, **f: HITS)
+    monkeypatch.setattr(sys.modules["searchify.search"], "search_report", lambda q, n, backend=None, **f: REPORT)
     result = runner.invoke(cli.app, ["search", "Where is the Eiffel Tower?"])
     assert result.exit_code == 0
     assert json.loads(result.stdout) == {"results": HITS}
 
 
 def test_search_no_json(monkeypatch):
-    monkeypatch.setattr(sys.modules["searchify.search"], "search", lambda q, n, backend=None, **f: HITS)
+    monkeypatch.setattr(sys.modules["searchify.search"], "search_report", lambda q, n, backend=None, **f: REPORT)
     result = runner.invoke(cli.app, ["search", "q", "--no-json"])
     assert "1. Eiffel Tower" in result.stdout and "https://a.com" in result.stdout
 
 
 def test_search_error_is_json_and_nonzero(monkeypatch):
-    def boom(*a, **k):
-        raise SearchBackendError("down")
-    monkeypatch.setattr(sys.modules["searchify.search"], "search", boom)
+    monkeypatch.setattr(sys.modules["searchify.search"], "search_report",
+                        lambda *a, **k: {"results": [], "error": "down", "backend": None})
     result = runner.invoke(cli.app, ["search", "q"])
     assert result.exit_code == 1
     assert json.loads(result.stdout)["error"] == "down"

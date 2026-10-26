@@ -430,6 +430,36 @@ def _reader_metadata(html: str, url: str, tree) -> Dict:
         return extract_mod._metadata(html, url, extensive=False)
 
 
+_STRUCTURED_META_RE = re.compile(r"^(og|twitter|article|product|fb|al|music|video|book|profile):", re.IGNORECASE)
+
+
+def structured_data(tree) -> Dict:
+    """The machine-readable blocks a page carries, untouched: every JSON-LD block
+    that parses (``json_ld``, a list of the parsed objects) and the namespaced
+    ``<meta>`` tags such as og:title or product:price:amount (``meta``, name to
+    content). Shop and vendor pages carry price, currency, availability and
+    GTIN here, so a caller needs no model to read them. Broken blocks are skipped."""
+    import json  # noqa: PLC0415
+
+    out: Dict = {"json_ld": [], "meta": {}}
+    if tree is None:
+        return out
+    for node in tree.xpath('//script[@type="application/ld+json"]'):
+        raw = (node.text or "").strip().replace("<![CDATA[", "").replace("]]>", "")
+        if not raw:
+            continue
+        try:
+            data = json.loads(raw)
+        except ValueError:
+            continue
+        out["json_ld"].extend(data if isinstance(data, list) else [data])
+    for meta in tree.xpath("//meta[@content]"):
+        key = (meta.get("property") or meta.get("name") or "").strip()
+        if key and _STRUCTURED_META_RE.match(key):
+            out["meta"].setdefault(key.lower(), " ".join((meta.get("content") or "").split()))
+    return out
+
+
 def reader_document(html: str, url: str = "", fmt: str = "markdown") -> Dict:
     """Ganze Seite als Dokument (Felder wie app.extract.extract_document).
     Reine Funktion, laeuft im Extraktions-Prozess."""
@@ -456,6 +486,10 @@ def reader_document(html: str, url: str = "", fmt: str = "markdown") -> Dict:
     except Exception:  # noqa: BLE001
         links = []
     try:
+        structured = structured_data(tree)
+    except Exception:  # noqa: BLE001 - Beiwerk
+        structured = {"json_ld": [], "meta": {}}
+    try:
         title = reader_title(tree, None)
     except Exception:  # noqa: BLE001
         title = None
@@ -464,6 +498,7 @@ def reader_document(html: str, url: str = "", fmt: str = "markdown") -> Dict:
     # htmldate den Baum veraendern darf.
     meta = _reader_metadata(html, url, tree)
     doc = extract_mod._doc(url, meta, content, links)
+    doc["structured"] = structured
     if title:
         doc["title"] = title
     return doc
@@ -490,6 +525,8 @@ def read_pages(
         urls, fmt, timeout, extractor=reader_document, cache_prefix=_PREFIX,
         max_bytes=READER_MAX_BYTES,
     )
+    for d in docs:
+        d.setdefault("stage", "static")  # which rung of the ladder produced the page
     if render_mod.enabled() or stealth_mod.enabled():
         # Duenne Ergebnisse (JS-Huelle, "Skip to main content", Challenge-Seite) zaehlen
         # fuer die Stufen wie Fehler; scheitern alle, bleibt der statische Text.
@@ -530,6 +567,7 @@ def _tavily_failed(
         if it.get("url") in wanted and content:
             doc = extract_mod._doc(it["url"], {}, content, [])
             doc["source"] = "tavily"
+            doc["stage"] = "tavily"
             got[it["url"]] = doc
     for url, doc in got.items():
         pages_mod._docs().put(f"{_PREFIX}{fmt}|{url}", doc)
@@ -587,9 +625,12 @@ def _render_failed(
         else:
             still.append(fail)
 
-    def good(html: Optional[str], url: str) -> Optional[Dict]:
+    def good(html: Optional[str], url: str, stage: str) -> Optional[Dict]:
         doc = reader_document(html, url, fmt) if html else None
-        return doc if doc and not _poor(doc.get("content") or "") else None
+        if doc and not _poor(doc.get("content") or ""):
+            doc["stage"] = stage
+            return doc
+        return None
 
     for fail in failed:
         if fail.get("error") == "Zeitlimit" or rest(RENDER_TIMEOUT_S) < RENDER_MIN_REST_S:
@@ -600,10 +641,10 @@ def _render_failed(
             status, html = render_mod.try_render(fail["url"], timeout=rest(RENDER_TIMEOUT_S))
             if status == "tried":
                 tried += 1
-                doc = good(html, fail["url"])
+                doc = good(html, fail["url"], "browser")
                 if doc is None and rest(DIRECT_TIMEOUT_S) >= DIRECT_MIN_REST_S:
                     status, html = render_mod.try_render_direct(fail["url"], timeout=rest(DIRECT_TIMEOUT_S))
-                    doc = good(html, fail["url"]) if status == "tried" else None
+                    doc = good(html, fail["url"], "browser-direct") if status == "tried" else None
             else:
                 # Platz belegt: die uebrigen nicht auch noch je 1 s warten lassen.
                 busy = status in ("busy", "off")
@@ -612,7 +653,7 @@ def _render_failed(
             status, html = stealth_mod.try_stealth(fail["url"], timeout=rest(STEALTH_TIMEOUT_S))
             if status == "tried":
                 stealth_tried += 1
-                doc = good(html, fail["url"])
+                doc = good(html, fail["url"], "stealth")
             else:
                 stealth_busy = status in ("busy", "off")
         if doc is None:

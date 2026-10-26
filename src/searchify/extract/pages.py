@@ -42,7 +42,7 @@ def _read_one(
         return cached, None
     html = extract_mod.fetch_url(url, timeout, max_bytes)
     if not html:
-        return None, "Seite nicht ladbar (Fehler, Bot-Schutz, kein HTML oder blockierte Adresse)"
+        return None, extract_mod.fetch_failure() or "page could not be loaded"
     try:
         pool: ProcessPoolExecutor = extract_mod._extract_pool()
         doc = pool.submit(extractor, html, url, fmt).result(timeout=15)
