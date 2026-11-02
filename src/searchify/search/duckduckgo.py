@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional
 
-from ._common import DDGS_REGION, SearchBackendError, dedupe_and_filter, site_scoped
+from ._common import DDGS_REGION, SearchBackendError, dedupe_and_filter, lookup, site_scoped
 
 
 def ddgs_search(
@@ -28,7 +28,7 @@ def ddgs_search(
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise SearchBackendError("ddgs is not installed (pip install ddgs).") from exc
 
-    region = DDGS_REGION.get(language or "", "wt-wt")
+    region = lookup(DDGS_REGION, language, "wt-wt")
     timelimit = {"day": "d", "week": "w", "month": "m", "year": "y"}.get(time_range or "")
     query = site_scoped(query, include_domains)
     run = DDGS().news if topic == "news" else DDGS().text

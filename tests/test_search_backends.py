@@ -31,3 +31,19 @@ def test_site_scoped():
 def test_unknown_backend_returns_empty():
     assert search("anything", backend="does-not-exist") == []
 # Stand: 24.10.2026
+
+
+def test_dutch_and_belgian_regions(monkeypatch):
+    """'nl' used to fall back to no region (wt-wt): Belgian searches gave the Dutch results."""
+    import sys, types
+    from searchify.search import duckduckgo
+    seen = []
+
+    class FakeDDGS:
+        def text(self, query, region, **kw):
+            seen.append(region)
+            return []
+    monkeypatch.setitem(sys.modules, "ddgs", types.SimpleNamespace(DDGS=FakeDDGS))
+    for lang in ("nl", "nl-NL", "nl-be", "nl_BE", "fr-be", "en-nl", "xx"):
+        duckduckgo.ddgs_search("padel", language=lang)
+    assert seen == ["nl-nl", "nl-nl", "be-nl", "be-nl", "be-fr", "us-en", "wt-wt"]
