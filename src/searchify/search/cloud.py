@@ -12,7 +12,7 @@ from typing import Dict, List, Optional
 import httpx
 
 from ..config import get_settings
-from ._common import COUNTRY_FOR_LANG, SearchBackendError, dedupe_and_filter, site_scoped
+from ._common import COUNTRY_FOR_LANG, SearchBackendError, dedupe_and_filter, lookup, site_scoped
 
 
 def serper_search(
@@ -38,7 +38,7 @@ def serper_search(
     }
     if language:
         body["hl"] = language
-    gl = country or COUNTRY_FOR_LANG.get(language or "")
+    gl = country or lookup(COUNTRY_FOR_LANG, language)
     if gl:
         body["gl"] = gl
     if time_range:

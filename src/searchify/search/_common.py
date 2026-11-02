@@ -10,10 +10,26 @@ class SearchBackendError(RuntimeError):
 
 
 # Map a language code to a DuckDuckGo region. "wt-wt" means no region.
-DDGS_REGION = {"en": "us-en", "de": "de-de", "es": "es-es", "fr": "fr-fr"}
+DDGS_REGION = {"en": "us-en", "de": "de-de", "es": "es-es", "fr": "fr-fr", "nl": "nl-nl",
+               # language-country codes, as the search skill sends them ("nl-be" = Dutch in Belgium)
+               "nl-nl": "nl-nl", "nl-be": "be-nl", "fr-be": "be-fr", "fr-fr": "fr-fr", "de-de": "de-de",
+               "en-gb": "uk-en", "en-us": "us-en"}
 
 # Map a language code to a Google country code for the cloud backend.
-COUNTRY_FOR_LANG = {"en": "us", "de": "de", "es": "es", "fr": "fr"}
+COUNTRY_FOR_LANG = {"en": "us", "de": "de", "es": "es", "fr": "fr", "nl": "nl",
+                    "nl-nl": "nl", "nl-be": "be", "fr-be": "be", "fr-fr": "fr", "de-de": "de",
+                    "en-gb": "gb", "en-us": "us"}
+
+
+def norm_language(language):
+    """'nl-BE', 'nl_be', 'NL' -> 'nl-be', 'nl'; None stays None."""
+    return language.strip().lower().replace("_", "-") if language else language
+
+
+def lookup(table, language, default=None):
+    """The table's value for 'nl-be', else for its language part 'nl' ('en-nl' keeps English's region)."""
+    lang = norm_language(language) or ""
+    return table.get(lang) or table.get(lang.split("-")[0]) or default
 
 
 def host_matches(link: str, domains: List[str]) -> bool:
